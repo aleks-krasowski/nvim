@@ -1,6 +1,5 @@
 -- lua/plugins/jupyter.lua
 return {
-  { "GCBallesteros/jupytext.nvim", opts = { style = "percent", output_extension = "py" } },
   {
     "benlubas/molten-nvim",
     lazy = false,
