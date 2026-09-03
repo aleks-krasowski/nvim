@@ -166,7 +166,7 @@ return {
     lazy = false,
     build = ":UpdateRemotePlugins",
     init = function()
-      vim.g.molten_image_provider = "image.nvim"
+      vim.g.molten_image_provider = "snacks.nvim"
       -- outputs as virtual lines under the cell; float only on demand
       vim.g.molten_virt_text_output = true
       vim.g.molten_virt_lines_off_by_1 = false
@@ -226,9 +226,6 @@ return {
       { "<leader>jd", ":MoltenDelete<cr>", desc = "Delete cell output" },
     },
   },
-  -- Support for image outputs in Molten
-  -- Hard-coded for kitty terminal emulator
-  { "3rd/image.nvim", opts = { backend = "kitty" } },
   -- Rendering of jupyter notebooks as markdown files, with support for hydrogen-style `# %%` cells.
   {
     "GCBallesteros/jupytext.nvim",
