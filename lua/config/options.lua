@@ -138,3 +138,6 @@ if vim.env.SSH_TTY then
     },
   }
 end
+
+-- Required for Molten -- sets nvim venv for python
+vim.g.python3_host_prog = vim.fn.expand("~/.venvs/nvim/bin/python")
