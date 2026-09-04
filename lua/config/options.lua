@@ -22,3 +22,7 @@ if vim.env.SSH_TTY then
     },
   }
 end
+
+-- Always draw a separator line between windows, including under the last one
+vim.opt.laststatus = 3
+vim.opt.fillchars:append({ vert = "┃", horiz = "━", horizup = "┻", horizdown = "┳", vertleft = "┫", vertright = "┣", verthoriz = "╋" })
