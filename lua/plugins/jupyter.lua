@@ -1,16 +1,20 @@
 -- lua/plugins/jupyter.lua
 
--- Host venv: needs pynvim, jupyter_client, cairosvg, pnglatex, plotly, jupytext.
-local NVIM_VENV = vim.fn.expand("~/.venvs/nvim")
+-- Host venv: $NVIM_VENV if set, otherwise ~/.venvs/nvim.
+-- Needs pynvim, jupyter_client, ipykernel, jupytext, cairosvg, pnglatex, plotly.
+local NVIM_VENV = vim.env.NVIM_VENV or vim.fn.expand("~/.venvs/nvim")
 
 if not vim.g.python3_host_prog then
   local py = NVIM_VENV .. "/bin/python"
   if vim.fn.executable(py) == 1 then
     vim.g.python3_host_prog = py
   else
-    vim.notify("jupyter.lua: " .. py .. " not found; python3_host_prog left unset", vim.log.levels.WARN)
     vim.notify(
-      "Please create a venv with 'pynvim, jupyter_client, cairosvg, pnglatex, plotly, jupytext' installed",
+      (
+        "jupyter.lua: %s not found; python3_host_prog left unset.\n"
+        .. "Set $NVIM_VENV or create ~/.venvs/nvim with: "
+        .. "pynvim jupyter_client ipykernel jupytext cairosvg pnglatex plotly"
+      ):format(py),
       vim.log.levels.WARN
     )
   end
