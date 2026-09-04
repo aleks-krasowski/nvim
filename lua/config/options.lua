@@ -4,6 +4,7 @@
 
 -- lua/config/options.lua (overwrites defaults)
 vim.opt.autowrite = false
+vim.g.snacks_animate = false
 
 -- Support for copying to clipboard from remote
 if vim.env.SSH_TTY then
