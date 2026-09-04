@@ -68,24 +68,66 @@ local function cell_bounds(line)
   return s, e - 1
 end
 
-local function eval_range(s, e)
-  if s <= e then
+-- Persist the chosen kernel per buffer (vim.b.molten_kernel).
+-- Returns nil for "let Molten decide" when only one kernel is running.
+local function with_kernel(cb, prompt)
+  local ks = vim.fn.MoltenRunningKernels(true)
+  if #ks == 0 then
+    vim.notify("No Molten kernel running for this buffer (<leader>ji)", vim.log.levels.WARN)
+    return
+  end
+  if #ks == 1 then
+    vim.b.molten_kernel = nil
+    return cb(nil)
+  end
+  local chosen = vim.b.molten_kernel
+  if chosen and vim.tbl_contains(ks, chosen) then
+    return cb(chosen)
+  end
+  vim.ui.select(ks, { prompt = prompt or "Kernel:" }, function(k)
+    if k then
+      vim.b.molten_kernel = k
+      cb(k)
+    end
+  end)
+end
+
+-- Force a new choice (ignores the stored one).
+local function select_kernel()
+  vim.b.molten_kernel = nil
+  with_kernel(function(k)
+    vim.notify("Kernel: " .. (k or vim.fn.MoltenRunningKernels(true)[1]))
+  end, "Use kernel:")
+end
+
+local function eval_range(kernel, s, e)
+  if s > e then
+    return
+  end
+  if kernel then
+    vim.fn.MoltenEvaluateRange(kernel, s, e)
+  else
     vim.fn.MoltenEvaluateRange(s, e)
   end
 end
 
 local function run_cell()
-  eval_range(cell_bounds(vim.api.nvim_win_get_cursor(0)[1]))
+  local s, e = cell_bounds(vim.api.nvim_win_get_cursor(0)[1])
+  with_kernel(function(k)
+    eval_range(k, s, e)
+  end)
 end
 
 -- Evaluate every cell for which pred(cell, cursor_line) is true, one Molten cell each.
 local function run_cells(pred)
   local cur = vim.api.nvim_win_get_cursor(0)[1]
-  for _, c in ipairs(cells()) do
-    if pred(c, cur) then
-      eval_range(c[1], c[2])
+  with_kernel(function(k)
+    for _, c in ipairs(cells()) do
+      if pred(c, cur) then
+        eval_range(k, c[1], c[2])
+      end
     end
-  end
+  end)
 end
 
 local function run_all()
@@ -161,6 +203,27 @@ local function insert_cell(kind, where)
   vim.cmd("startinsert!")
 end
 
+local function kill_kernel()
+  local ks = vim.fn.MoltenRunningKernels(true)
+  if #ks == 0 then
+    return vim.notify("No kernel running", vim.log.levels.WARN)
+  end
+  local function deinit(k)
+    vim.cmd("MoltenDeinit" .. (k and (" " .. k) or ""))
+    if k == nil or vim.b.molten_kernel == k then
+      vim.b.molten_kernel = nil
+    end
+  end
+  if #ks == 1 then
+    return deinit(nil)
+  end
+  vim.ui.select(ks, { prompt = "Kill kernel:" }, function(k)
+    if k then
+      deinit(k)
+    end
+  end)
+end
+
 ---------------------------------------------------------------------------
 return {
   -- Molten: allows running Jupyter notebooks from within Neovim,
@@ -183,6 +246,8 @@ return {
       { "<leader>ji", ":lcd %:h | MoltenInit<cr>", desc = "Init kernel (cwd = notebook dir)" },
       { "<leader>jx", ":MoltenInterrupt<cr>", desc = "Interrupt kernel" },
       { "<leader>jR", ":MoltenRestart!<cr>", desc = "Restart kernel" },
+      { "<leader>js", select_kernel, desc = "Select kernel for this buffer" },
+      { "<leader>jq", kill_kernel, desc = "Kill kernel" },
       -- evaluate
       { "<leader>jj", run_cell, desc = "Eval cell" },
       { "<leader>jn", run_cell_and_next, desc = "Eval cell and go to next" },
